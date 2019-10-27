@@ -4557,6 +4557,7 @@ static void parse_init (void) {
 
 #ifndef SOURCEDIR
 #define SOURCEDIR "./"
+#define SOURCEDIR "/home/dylan/github/mir/"
 #endif
 
 #ifndef INSTALLDIR
@@ -11734,11 +11735,11 @@ static const char *get_module_name (void) {
   return str;
 }
 
-static int compile (const char *source_name) {
+static MIR_module_t compile (const char *source_name) {
   double start_time = real_usec_time ();
   node_t r;
   unsigned n_error_before;
-  MIR_module_t m;
+  MIR_module_t m = NULL;
 
   if (verbose_p)
     fprintf (stderr, "compiler init end           -- %.0f usec\n", real_usec_time () - start_time);
@@ -11773,7 +11774,7 @@ static int compile (const char *source_name) {
   }
   if (verbose_p)
     fprintf (stderr, "compiler end                -- %.0f usec\n", real_usec_time () - start_time);
-  return n_errors == 0;
+  return n_errors == 0 ? m : NULL;
 }
 
 static void compile_finish (void) {
@@ -12006,6 +12007,86 @@ int main (int argc, char *argv[], char *env[]) {
   VARR_DESTROY (char, input);
   return ret_code;
 }
+#endif
+
+#ifdef RAVI
+
+#include "c2mir.h"
+#include "mir-gen.h"
+
+static size_t curr_char;
+static const char *code;
+
+static int t_getc (void) {
+  int c = code[curr_char];
+
+  if (c == 0)
+    c = EOF;
+  else
+    curr_char++;
+  return c;
+}
+
+static void t_ungetc (int c) {
+  if (c == EOF) {
+    assert (code[curr_char] == 0);
+  } else {
+    assert (curr_char != 0 && code[curr_char - 1] == c);
+    curr_char--;
+  }
+}
+
+static int other_option_func (int i, int argc, char *argv[], void *data) {
+  return i;
+}
+
+static MIR_item_t find_function(MIR_module_t module, const char *func_name) {
+  MIR_item_t func, main_func = NULL;
+  for (func = DLIST_HEAD (MIR_item_t, module->items); func != NULL;
+       func = DLIST_NEXT (MIR_item_t, func)) {
+    if (func->item_type == MIR_func_item && strcmp (func->u.func->name, func_name) == 0)
+      main_func = func;
+  }
+  return main_func;
+}
+
+void *MIR_compile_C_module(const char *inputbuffer, const char *func_name, void *(Import_resolver_func)(const char *name))
+{
+  int n = 0;
+  int ret_code = 0;
+  int (*fun_addr) (void *) = NULL;
+  if (!ctx) {
+    ctx = MIR_init ();
+  }
+  c2mir_init();
+  code = inputbuffer;
+  curr_char = 0;
+  compile_init (0, NULL, t_getc, t_ungetc, other_option_func, &n);
+  char module_name[80];
+  snprintf(module_name, sizeof module_name, "%s_module", func_name);
+  curr_module_num++;
+  MIR_module_t module = compile (module_name);
+  if (!module) ret_code = 1;
+  compile_finish ();
+  if (ret_code == 0 && module) {
+    MIR_item_t main_func = find_function(module, func_name);
+    if (main_func == NULL) {
+      fprintf(stderr, "function %s not found\n", func_name);
+      exit(1);
+    }
+    MIR_load_module (ctx, module);
+    MIR_gen_init (ctx);
+#if MIR_GEN_DEBUG
+    MIR_gen_set_debug_file (ctx, stderr);
+#endif
+    MIR_link (ctx, MIR_set_gen_interface, Import_resolver_func);
+    fun_addr = MIR_gen (ctx, main_func);
+    MIR_gen_finish (ctx);
+  }
+  c2mir_finish ();
+  return fun_addr;
+}
+
 #endif
 
 /* Local Variables:                */
