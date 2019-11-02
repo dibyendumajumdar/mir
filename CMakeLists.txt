@@ -46,7 +46,7 @@ add_library(c2mir
     ${C2MIR_HEADERS}
     ${MIR_SRCS}
     ${C2MIR_SRCS})
-set_target_properties(c2mir PROPERTIES COMPILE_DEFINITIONS "RAVI=1")
+target_compile_definitions(c2mir PRIVATE RAVI=1 C2MIR_NO_DRIVER=1)
 target_link_libraries(c2mir ${LIBS})
 
 add_executable(c2mirexe
@@ -54,7 +54,6 @@ add_executable(c2mirexe
     ${C2MIR_HEADERS}
     ${MIR_SRCS}
     ${C2MIR_SRCS})
-set_target_properties(c2mirexe PROPERTIES COMPILE_DEFINITIONS "TEST_C2MIR=1")
 target_link_libraries(c2mirexe ${LIBS})
 
 add_executable(c2mirtest
