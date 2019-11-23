@@ -4557,7 +4557,6 @@ static void parse_init (void) {
 
 #ifndef SOURCEDIR
 #define SOURCEDIR "./"
-#define SOURCEDIR "/home/dylan/github/mir/"
 #endif
 
 #ifndef INSTALLDIR
@@ -4584,8 +4583,6 @@ static void add_standard_includes (void) {
     } else if ((f = fopen (str2, "r")) != NULL) {
       add_stream (f, str2);
     } else {
-      fprintf (stderr, "Cannot open %s or %s -- good bye\n", str1, str2);
-      exit (0);
     }
   }
 }

@@ -36,7 +36,7 @@ set(LIBS dl)
 add_definitions(-D${TARGET})
 add_definitions(-DMIR_IO)
 add_definitions(-DMIR_SCAN)
-
+# add_definitions(-DMIR_GEN_DEBUG)
 
 include_directories("${CMAKE_SOURCE_DIR}")
 include_directories("${CMAKE_SOURCE_DIR}/c2mir")
