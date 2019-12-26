@@ -11,6 +11,7 @@ set(TARGET x86_64)
 
 set(MIR_HEADERS 
     mir.h
+    mir-gen.h
     mir-varr.h
     mir-dlist.h 
     mir-htab.h 
